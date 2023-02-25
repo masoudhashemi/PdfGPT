@@ -84,7 +84,7 @@ def text_to_docs(text: dict) -> List[Document]:
 
         # Add page numbers as metadata
         for i, doc in enumerate(page_docs_):
-            doc.metadata["page"] = f"{key}--{i + 1}"
+            doc.metadata["page"] = f"{key}-{i + 1}"
 
         page_docs.extend(page_docs_)
 
@@ -99,7 +99,9 @@ def text_to_docs(text: dict) -> List[Document]:
         )
         chunks = text_splitter.split_text(doc.page_content)
         for i, chunk in enumerate(chunks):
-            doc = Document(page_content=chunk, metadata={"page": doc.metadata["page"], "chunk": i})
+            doc = Document(
+                page_content=chunk, metadata={"page": doc.metadata["page"], "chunk": i}
+            )
             # Add sources a metadata
             doc.metadata["source"] = f"{doc.metadata['page']}-{doc.metadata['chunk']}"
             doc_chunks.append(doc)
@@ -138,10 +140,14 @@ def get_answer(docs: List[Document], query: str) -> Dict[str, Any]:
 
     # Get the answer
 
-    chain = load_qa_with_sources_chain(OpenAI(temperature=0, openai_api_key=st.session_state.get("OPENAI_API_KEY")), chain_type="stuff", prompt=STUFF_PROMPT)  # type: ignore
+    chain = load_qa_with_sources_chain(
+        OpenAI(temperature=0, openai_api_key=st.session_state.get("OPENAI_API_KEY")),
+        chain_type="stuff",
+        prompt=STUFF_PROMPT,
+    )
 
     # Cohere doesn't work very well as of now.
-    # chain = load_qa_with_sources_chain(Cohere(temperature=0), chain_type="stuff", prompt=STUFF_PROMPT)  # type: ignore
+    # chain = load_qa_with_sources_chain(Cohere(temperature=0), chain_type="stuff", prompt=STUFF_PROMPT)
     answer = chain({"input_documents": docs, "question": query}, return_only_outputs=True)
     return answer
 

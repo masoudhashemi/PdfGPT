@@ -35,9 +35,15 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
         """Get model names from just old model name."""
         if "model_name" in values:
             if "document_model_name" in values:
-                raise ValueError("Both `model_name` and `document_model_name` were provided, " "but only one should be.")
+                raise ValueError(
+                    "Both `model_name` and `document_model_name` were provided, "
+                    "but only one should be."
+                )
             if "query_model_name" in values:
-                raise ValueError("Both `model_name` and `query_model_name` were provided, " "but only one should be.")
+                raise ValueError(
+                    "Both `model_name` and `query_model_name` were provided, "
+                    "but only one should be."
+                )
             model_name = values.pop("model_name")
             values["document_model_name"] = f"text-search-{model_name}-doc-001"
             values["query_model_name"] = f"text-search-{model_name}-query-001"
@@ -53,7 +59,10 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
             openai.api_key = openai_api_key
             values["client"] = openai.Embedding
         except ImportError:
-            raise ValueError("Could not import openai python package. " "Please it install it with `pip install openai`.")
+            raise ValueError(
+                "Could not import openai python package. "
+                "Please it install it with `pip install openai`."
+            )
         return values
 
     @retry(
@@ -80,7 +89,9 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
         Returns:
             List of embeddings, one for each text.
         """
-        responses = [self._embedding_func(text, engine=self.document_model_name) for text in texts]
+        responses = [
+            self._embedding_func(text, engine=self.document_model_name) for text in texts
+        ]
         return responses
 
     def embed_query(self, text: str) -> List[float]:
