@@ -1,6 +1,7 @@
 import os
 
 import streamlit as st
+from langchain.docstore.document import Document
 from openai.error import OpenAIError
 from streamlit_chat import message
 
@@ -86,6 +87,9 @@ with st.sidebar:
 if "generated" not in st.session_state:
     st.session_state["generated"] = []
 
+if "history" not in st.session_state:
+    st.session_state["history"] = []
+
 if "past" not in st.session_state:
     st.session_state["past"] = []
 
@@ -101,18 +105,39 @@ user_input = get_text()
 
 button = st.button("Submit")
 if button or st.session_state.get("submit"):
+    tab1, tab2 = st.tabs(["Chat", "Sources"])
     if not user_input:
         st.error("Please enter a question!")
     else:
         st.session_state["submit"] = True
         sources = search_docs(index, user_input)
         try:
+            if len(st.session_state.history) > 0:
+                history = "\n".join(st.session_state.history)
+                history = Document(page_content=history)
+                history.metadata["source"] = "History"
+                sources.append(history)
             answer = get_answer(sources, user_input)
             st.session_state.past.append(user_input)
-            st.session_state.generated.append(answer["output_text"].split("SOURCES: ")[0])
+            st.session_state.generated.append(answer["output_text"])
+            st.session_state.history.append(answer["output_text"].split("SOURCES: ")[0])
         except OpenAIError as e:
             st.error(e._message)
         if st.session_state["generated"]:
-            for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-                message(st.session_state["generated"][i], key=str(i))
-                message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
+            with tab1:
+                for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+                    message(st.session_state["generated"][i], key=str(i))
+                    message(
+                        st.session_state["past"][i], is_user=True, key=str(i) + "_user"
+                    )
+            with tab2:
+                sources = get_sources(answer, sources)
+                if sources:
+                    for source in sources:
+                        st.markdown(f"### {source.metadata['source']}")
+                        st.markdown(
+                            wrap_text_in_html(source.page_content), unsafe_allow_html=True
+                        )
+                        st.markdown("---")
+                else:
+                    st.write("No sources found for this question.")
