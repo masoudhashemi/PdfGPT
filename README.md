@@ -1,8 +1,8 @@
-<h1 align="center">
-FileGPT 🤖
-</h1>
+# PdfGPT
 
-# Running Locally
+You want to review a topic, use this to read pdfs and get a summary of the topic. You can ask questions about the topic and get answers. You can also ask questions about the pdfs and get answers.
+
+## Running Locally
 
 1. Clone the repository
 
