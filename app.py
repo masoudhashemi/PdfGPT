@@ -27,7 +27,7 @@ def set_openai_api_key(api_key: str):
     st.session_state["OPENAI_API_KEY"] = api_key
 
 
-st.markdown("<h1>File GPT 🤖<small></h1>", unsafe_allow_html=True)
+st.markdown("<h1>Pdf GPT 🤖<small></h1>", unsafe_allow_html=True)
 
 # Sidebar
 index = None
@@ -118,6 +118,7 @@ if button or st.session_state.get("submit"):
                 history.metadata["source"] = "History"
                 sources.append(history)
             answer = get_answer(sources, user_input)
+            sources = get_sources(answer, sources)
             st.session_state.past.append(user_input)
             st.session_state.generated.append(answer["output_text"])
             st.session_state.history.append(answer["output_text"].split("SOURCES: ")[0])
@@ -126,18 +127,47 @@ if button or st.session_state.get("submit"):
         if st.session_state["generated"]:
             with tab1:
                 for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-                    message(st.session_state["generated"][i], key=str(i))
-                    message(
-                        st.session_state["past"][i], is_user=True, key=str(i) + "_user"
-                    )
+                    with st.container():
+                        st.markdown(
+                            f"<div class='bot'>🤖: {st.session_state['generated'][i]}</div>",
+                            unsafe_allow_html=True,
+                        )
+                    st.markdown("\n\n")
+                    with st.container():
+                        st.markdown(
+                            f"<div class='user'>🤓: {st.session_state['past'][i]}</div>",
+                            unsafe_allow_html=True,
+                        )
             with tab2:
-                sources = get_sources(answer, sources)
                 if sources:
                     for source in sources:
-                        st.markdown(f"### {source.metadata['source']}")
-                        st.markdown(
-                            wrap_text_in_html(source.page_content), unsafe_allow_html=True
-                        )
-                        st.markdown("---")
+                        with st.container():
+                            st.markdown(f"### {source.metadata['source']}")
+                            st.markdown(
+                                f"<div class='bot'>{wrap_text_in_html(source.page_content)}</div>",
+                                unsafe_allow_html=True,
+                            )
                 else:
                     st.write("No sources found for this question.")
+
+
+# Define CSS styles for chatbot1 and chatbot2
+st.markdown(
+    """
+    <style>
+    .user {
+        background-color: #E0E0E0;
+        padding: 5px;
+        border-radius: 5px;
+        text-align: right;
+    }
+    .bot {
+        background-color: #FAFAFA;
+        padding: 5px;
+        border-radius: 5px;
+        text-align: left;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
