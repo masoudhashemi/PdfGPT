@@ -1,6 +1,8 @@
 import os
 
 import streamlit as st
+from langchain import Cohere, OpenAI
+from langchain.chains.summarize import load_summarize_chain
 from langchain.docstore.document import Document
 from openai.error import OpenAIError
 from streamlit_chat import message
@@ -26,6 +28,9 @@ def clear_submit():
 def set_openai_api_key(api_key: str):
     st.session_state["OPENAI_API_KEY"] = api_key
 
+
+if "summary" not in st.session_state:
+    st.session_state["summary"] = ""
 
 st.markdown("<h1>Pdf GPT 🤖<small></h1>", unsafe_allow_html=True)
 
@@ -76,6 +81,13 @@ with st.sidebar:
                     i += 1
                 all_docs[file_name] = doc
         text = text_to_docs(all_docs)
+        llm = OpenAI(
+            temperature=0,
+            max_tokens=512,
+            openai_api_key=st.session_state.get("OPENAI_API_KEY"),
+        )
+        summary_chain = load_summarize_chain(llm, chain_type="map_reduce")
+        st.session_state["summary"] = summary_chain.run(text)
         try:
             with st.spinner("Indexing document... This may take a while⏳"):
                 index = embed_docs(text)
@@ -92,6 +104,9 @@ if "history" not in st.session_state:
 
 if "past" not in st.session_state:
     st.session_state["past"] = []
+
+
+st.write(st.session_state["summary"])
 
 
 def get_text():
